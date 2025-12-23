@@ -5,6 +5,12 @@ FROM golang:1.17.1-alpine3.14 as builder
 # 指定构建过程中的工作目录
 WORKDIR /app
 
+# 先拷贝go.mod和go.sum（如果存在）
+COPY go.mod go.sum* /app/
+
+# 下载依赖（这会自动更新go.sum文件）
+RUN go mod download && go mod verify
+
 # 将当前目录（dockerfile所在目录）下所有文件都拷贝到工作目录下（.dockerignore中文件除外）
 COPY . /app/
 
