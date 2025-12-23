@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"wxcloudrun-golang/db/model"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -50,8 +51,37 @@ func Init() error {
 
 	dbInstance = db
 
+	// 自动迁移所有表
+	if err := AutoMigrate(); err != nil {
+		fmt.Println("AutoMigrate error,err=", err.Error())
+		return err
+	}
+
 	fmt.Println("finish init mysql with ", source)
 	return nil
+}
+
+// AutoMigrate 自动迁移表结构
+func AutoMigrate() error {
+	return dbInstance.AutoMigrate(
+		&model.UserModel{},
+		&model.AddressModel{},
+		&model.RechargeModel{},
+		&model.CategoryModel{},
+		&model.ProductModel{},
+		&model.ProductImageModel{},
+		&model.OrderModel{},
+		&model.OrderItemModel{},
+		&model.CartModel{},
+		&model.PaymentModel{},
+		&model.DeliveryModel{},
+		&model.DeliveryTrackModel{},
+		&model.ActivityModel{},
+		&model.CouponModel{},
+		&model.UserCouponModel{},
+		&model.LotteryModel{},
+		&model.LotteryRecordModel{},
+	)
 }
 
 // Get ...

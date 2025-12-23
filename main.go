@@ -2,19 +2,25 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
+	"wxcloudrun-golang/config"
 	"wxcloudrun-golang/db"
-	"wxcloudrun-golang/service"
+	"wxcloudrun-golang/router"
 )
 
 func main() {
+	// 初始化配置
+	config.Init()
+
+	// 初始化数据库
 	if err := db.Init(); err != nil {
 		panic(fmt.Sprintf("mysql init failed with %+v", err))
 	}
 
-	http.HandleFunc("/", service.IndexHandler)
-	http.HandleFunc("/api/count", service.CounterHandler)
+	// 设置路由
+	r := router.SetupRouter()
 
-	log.Fatal(http.ListenAndServe(":80", nil))
+	// 启动服务
+	if err := r.Run(":80"); err != nil {
+		panic(fmt.Sprintf("server start failed with %+v", err))
+	}
 }
