@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"net/http"
-	"strconv"
 	"strings"
 	"wxcloudrun-golang/utils"
 

@@ -39,8 +39,8 @@ func GetCart(c *gin.Context) {
 
 // AddToCartRequest 添加到购物车请求
 type AddToCartRequest struct {
-	ProductId int `json:"productId" binding:"required"`
-	Quantity  int `json:"quantity" binding:"required,min=1"`
+	ProductId int32 `json:"productId" binding:"required"`
+	Quantity  int   `json:"quantity" binding:"required,min=1"`
 }
 
 // AddToCart 添加到购物车
