@@ -15,8 +15,6 @@ var dbInstance *gorm.DB
 
 // Init 初始化数据库
 func Init() error {
-
-	source := "%s:%s@tcp(%s)/%s?readTimeout=1500ms&writeTimeout=1500ms&charset=utf8&loc=Local&&parseTime=true"
 	user := os.Getenv("MYSQL_USERNAME")
 	pwd := os.Getenv("MYSQL_PASSWORD")
 	addr := os.Getenv("MYSQL_ADDRESS")
@@ -24,40 +22,63 @@ func Init() error {
 	if dataBase == "" {
 		dataBase = "golang_demo"
 	}
-	source = fmt.Sprintf(source, user, pwd, addr, dataBase)
-	fmt.Println("start init mysql with ", source)
 
-	db, err := gorm.Open(mysql.Open(source), &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{
-			SingularTable: true, // use singular table name, table for `User` would be `user` with this option enabled
-		}})
+	// 修复连接字符串格式：使用单个&而不是&&
+	source := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local&timeout=10s&readTimeout=30s&writeTimeout=30s",
+		user, pwd, addr, dataBase)
+	
+	// 隐藏密码打印（安全考虑）
+	sourceForLog := fmt.Sprintf("%s:***@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local&timeout=10s&readTimeout=30s&writeTimeout=30s",
+		user, addr, dataBase)
+	fmt.Println("start init mysql with ", sourceForLog)
+
+	// 重试连接（最多3次）
+	var db *gorm.DB
+	var err error
+	maxRetries := 3
+	for i := 0; i < maxRetries; i++ {
+		db, err = gorm.Open(mysql.Open(source), &gorm.Config{
+			NamingStrategy: schema.NamingStrategy{
+				SingularTable: true,
+			},
+		})
+		if err == nil {
+			break
+		}
+		fmt.Printf("DB Open error (attempt %d/%d), err=%s\n", i+1, maxRetries, err.Error())
+		if i < maxRetries-1 {
+			time.Sleep(time.Second * 2)
+		}
+	}
+
 	if err != nil {
-		fmt.Println("DB Open error,err=", err.Error())
-		return err
+		return fmt.Errorf("failed to connect to database after %d attempts: %v", maxRetries, err)
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		fmt.Println("DB Init error,err=", err.Error())
-		return err
+		return fmt.Errorf("failed to get database instance: %v", err)
 	}
 
-	// 用于设置连接池中空闲连接的最大数量
-	sqlDB.SetMaxIdleConns(100)
-	// 设置打开数据库连接的最大数量
-	sqlDB.SetMaxOpenConns(200)
-	// 设置了连接可复用的最大时间
+	// 测试连接
+	if err := sqlDB.Ping(); err != nil {
+		return fmt.Errorf("failed to ping database: %v", err)
+	}
+
+	// 设置连接池参数
+	sqlDB.SetMaxIdleConns(10)  // 减少空闲连接数
+	sqlDB.SetMaxOpenConns(50)  // 减少最大连接数
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
 	dbInstance = db
 
 	// 自动迁移所有表
 	if err := AutoMigrate(); err != nil {
-		fmt.Println("AutoMigrate error,err=", err.Error())
-		return err
+		fmt.Printf("AutoMigrate error,err=%s\n", err.Error())
+		// 迁移失败不阻止启动，只记录错误
 	}
 
-	fmt.Println("finish init mysql with ", source)
+	fmt.Println("finish init mysql successfully")
 	return nil
 }
 
