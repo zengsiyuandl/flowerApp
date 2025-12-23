@@ -37,20 +37,23 @@ func UserLogin(c *gin.Context) {
 		return
 	}
 
-	// 查询或创建用户
+	// 查询或创建用户（使用 FirstOrCreate 更优雅）
 	var user model.UserModel
-	err = db.Get().Where("openid = ?", wxResp.OpenId).First(&user).Error
-	if err == gorm.ErrRecordNotFound {
-		// 创建新用户
-		user = model.UserModel{
-			OpenId:   wxResp.OpenId,
-			UnionId:  wxResp.UnionId,
-			Status:   1,
-		}
-		if err := db.Get().Create(&user).Error; err != nil {
-			utils.Error(500, "创建用户失败").WriteJSON(c.Writer)
-			return
-		}
+	result := db.Get().Where("openid = ?", wxResp.OpenId).FirstOrCreate(&user, model.UserModel{
+		OpenId:   wxResp.OpenId,
+		UnionId:  wxResp.UnionId,
+		Status:   1,
+	})
+	
+	if result.Error != nil {
+		utils.Error(500, "用户处理失败: "+result.Error.Error()).WriteJSON(c.Writer)
+		return
+	}
+	
+	// 如果用户已存在但UnionId为空，更新UnionId
+	if user.UnionId == "" && wxResp.UnionId != "" {
+		db.Get().Model(&user).Update("union_id", wxResp.UnionId)
+		user.UnionId = wxResp.UnionId
 	}
 
 	// 生成token
