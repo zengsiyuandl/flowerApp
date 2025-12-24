@@ -123,6 +123,52 @@ func SetupRouter() *gin.Engine {
 			rechargeGroup.POST("/create", api.CreateRecharge)
 			rechargeGroup.GET("/list", api.GetRechargeList)
 		}
+
+		// ========== 管理后台API ==========
+		// 注意：生产环境应该添加管理员权限验证
+		adminGroup := apiGroup.Group("/admin")
+		{
+			// 商品管理
+			adminGroup.GET("/product/list", api.AdminGetProductList)
+			adminGroup.POST("/product", api.AdminCreateProduct)
+			adminGroup.PUT("/product/:id", api.AdminUpdateProduct)
+			adminGroup.DELETE("/product/:id", api.AdminDeleteProduct)
+			adminGroup.GET("/product/:productId/images", api.AdminGetProductImages)
+			adminGroup.POST("/product/:productId/images", api.AdminAddProductImage)
+			adminGroup.DELETE("/product/image/:id", api.AdminDeleteProductImage)
+
+			// 分类管理
+			adminGroup.GET("/category/list", api.AdminGetCategoryList)
+			adminGroup.POST("/category", api.AdminCreateCategory)
+			adminGroup.PUT("/category/:id", api.AdminUpdateCategory)
+			adminGroup.DELETE("/category/:id", api.AdminDeleteCategory)
+
+			// 活动管理
+			adminGroup.GET("/activity/list", api.AdminGetActivityList)
+			adminGroup.POST("/activity", api.AdminCreateActivity)
+			adminGroup.PUT("/activity/:id", api.AdminUpdateActivity)
+			adminGroup.DELETE("/activity/:id", api.AdminDeleteActivity)
+
+			// 优惠券管理
+			adminGroup.GET("/coupon/list", api.AdminGetCouponList)
+			adminGroup.POST("/coupon", api.AdminCreateCoupon)
+			adminGroup.PUT("/coupon/:id", api.AdminUpdateCoupon)
+			adminGroup.DELETE("/coupon/:id", api.AdminDeleteCoupon)
+
+			// 订单管理
+			adminGroup.GET("/order/list", api.AdminGetOrderList)
+			adminGroup.PUT("/order/:id/ship", api.AdminShipOrder)
+
+			// 用户管理
+			adminGroup.GET("/user/list", api.AdminGetUserList)
+			adminGroup.POST("/user/:userId/recharge", api.AdminRechargeUser)
+
+			// 抽奖管理
+			adminGroup.GET("/lottery/list", api.AdminGetLotteryList)
+			adminGroup.POST("/lottery", api.AdminCreateLottery)
+			adminGroup.PUT("/lottery/:id", api.AdminUpdateLottery)
+			adminGroup.GET("/lottery/records", api.AdminGetLotteryRecords)
+		}
 	}
 
 	return r

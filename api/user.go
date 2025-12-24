@@ -8,7 +8,6 @@ import (
 	"wxcloudrun-golang/utils"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 // UserLoginRequest 登录请求

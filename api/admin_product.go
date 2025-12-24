@@ -1,0 +1,139 @@
+package api
+
+import (
+	"strconv"
+	"wxcloudrun-golang/db"
+	"wxcloudrun-golang/db/model"
+	"wxcloudrun-golang/utils"
+
+	"github.com/gin-gonic/gin"
+)
+
+// AdminGetProductList 管理后台获取商品列表（包含所有状态）
+func AdminGetProductList(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	keyword := c.Query("keyword")
+	categoryId := c.Query("categoryId")
+	status := c.Query("status")
+
+	query := db.Get().Model(&model.ProductModel{})
+
+	if keyword != "" {
+		query = query.Where("name LIKE ?", "%"+keyword+"%")
+	}
+	if categoryId != "" {
+		query = query.Where("category_id = ?", categoryId)
+	}
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	var total int64
+	query.Count(&total)
+
+	var products []model.ProductModel
+	offset := (page - 1) * pageSize
+	query.Order("id DESC").Offset(offset).Limit(pageSize).Find(&products)
+
+	utils.Success(map[string]interface{}{
+		"list":     products,
+		"total":    total,
+		"page":     page,
+		"pageSize": pageSize,
+	}).WriteJSON(c.Writer)
+}
+
+// AdminCreateProduct 创建商品
+func AdminCreateProduct(c *gin.Context) {
+	var product model.ProductModel
+	if err := c.ShouldBindJSON(&product); err != nil {
+		utils.Error(400, "参数错误: "+err.Error()).WriteJSON(c.Writer)
+		return
+	}
+
+	if err := db.Get().Create(&product).Error; err != nil {
+		utils.Error(500, "创建失败: "+err.Error()).WriteJSON(c.Writer)
+		return
+	}
+
+	utils.Success(product).WriteJSON(c.Writer)
+}
+
+// AdminUpdateProduct 更新商品
+func AdminUpdateProduct(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 32)
+
+	var product model.ProductModel
+	if err := db.Get().Where("id = ?", id).First(&product).Error; err != nil {
+		utils.Error(404, "商品不存在").WriteJSON(c.Writer)
+		return
+	}
+
+	if err := c.ShouldBindJSON(&product); err != nil {
+		utils.Error(400, "参数错误: "+err.Error()).WriteJSON(c.Writer)
+		return
+	}
+
+	product.Id = int32(id)
+	if err := db.Get().Save(&product).Error; err != nil {
+		utils.Error(500, "更新失败: "+err.Error()).WriteJSON(c.Writer)
+		return
+	}
+
+	utils.Success(product).WriteJSON(c.Writer)
+}
+
+// AdminDeleteProduct 删除商品
+func AdminDeleteProduct(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 32)
+
+	if err := db.Get().Where("id = ?", id).Delete(&model.ProductModel{}).Error; err != nil {
+		utils.Error(500, "删除失败: "+err.Error()).WriteJSON(c.Writer)
+		return
+	}
+
+	utils.Success(nil).WriteJSON(c.Writer)
+}
+
+// AdminGetProductImages 获取商品图片列表
+func AdminGetProductImages(c *gin.Context) {
+	productId, _ := strconv.ParseInt(c.Param("productId"), 10, 32)
+
+	var images []model.ProductImageModel
+	db.Get().Where("product_id = ?", productId).Order("sort ASC").Find(&images)
+
+	utils.Success(images).WriteJSON(c.Writer)
+}
+
+// AdminAddProductImage 添加商品图片
+func AdminAddProductImage(c *gin.Context) {
+	productId, _ := strconv.ParseInt(c.Param("productId"), 10, 32)
+
+	var image model.ProductImageModel
+	if err := c.ShouldBindJSON(&image); err != nil {
+		utils.Error(400, "参数错误").WriteJSON(c.Writer)
+		return
+	}
+
+	image.ProductId = int32(productId)
+	if err := db.Get().Create(&image).Error; err != nil {
+		utils.Error(500, "添加失败").WriteJSON(c.Writer)
+		return
+	}
+
+	utils.Success(image).WriteJSON(c.Writer)
+}
+
+// AdminDeleteProductImage 删除商品图片
+func AdminDeleteProductImage(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 32)
+
+	if err := db.Get().Where("id = ?", id).Delete(&model.ProductImageModel{}).Error; err != nil {
+		utils.Error(500, "删除失败").WriteJSON(c.Writer)
+		return
+	}
+
+	utils.Success(nil).WriteJSON(c.Writer)
+}
+
