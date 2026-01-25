@@ -200,13 +200,18 @@ func CreateOrder(c *gin.Context) {
 		order.DeliveryTime = deliveryTime
 	}
 
-	// 使用 Omit 排除零值时间字段，避免 MySQL 报错
-	createQuery := tx.Omit("pay_time", "ship_time", "complete_time")
-	if !hasDeliveryTime {
-		createQuery = createQuery.Omit("delivery_time")
+	// 使用 Select 明确指定要插入的字段，排除零值时间字段，避免 MySQL 报错
+	fieldsToSelect := []string{
+		"order_no", "user_id", "total_amount", "discount_amount", "pay_amount",
+		"delivery_type", "address_id", "receiver_name", "receiver_phone",
+		"receiver_address", "remark", "coupon_id", "status", "pay_status",
+		"created_at", "updated_at",
+	}
+	if hasDeliveryTime {
+		fieldsToSelect = append(fieldsToSelect, "delivery_time")
 	}
 
-	if err := createQuery.Create(&order).Error; err != nil {
+	if err := tx.Select(fieldsToSelect).Create(&order).Error; err != nil {
 		tx.Rollback()
 		utils.Error(500, "创建订单失败").WriteJSON(c.Writer)
 		return
