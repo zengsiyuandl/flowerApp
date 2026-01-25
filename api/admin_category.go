@@ -17,44 +17,66 @@ func AdminGetCategoryList(c *gin.Context) {
 	utils.Success(categories).WriteJSON(c.Writer)
 }
 
-// AdminCreateCategory 创建分类
+// AdminCreateCategory 创建分类（支持multipart/form-data，可同时上传图片）
 func AdminCreateCategory(c *gin.Context) {
-	var category model.CategoryModel
-	if err := c.ShouldBindJSON(&category); err != nil {
-		utils.Error(400, "参数错误: "+err.Error()).WriteJSON(c.Writer)
+	name, sort, status := parseCategoryFormData(c)
+
+	if name == "" {
+		utils.Error(400, "分类名称不能为空").WriteJSON(c.Writer)
 		return
 	}
+
+	iconID, errMsg := processCategoryIcon(c, 0)
+	if errMsg != "" {
+		utils.Error(400, errMsg).WriteJSON(c.Writer)
+		return
+	}
+
+	category := buildCategoryModel(0, name, iconID, sort, status)
 
 	if err := db.Get().Create(&category).Error; err != nil {
 		utils.Error(500, "创建失败: "+err.Error()).WriteJSON(c.Writer)
 		return
 	}
 
-	utils.Success(category).WriteJSON(c.Writer)
+	baseURL := getBaseURL(c)
+	categoryDTO := ToCategoryDTO(category, baseURL)
+	utils.Success(categoryDTO).WriteJSON(c.Writer)
 }
 
-// AdminUpdateCategory 更新分类
+// AdminUpdateCategory 更新分类（支持multipart/form-data，可同时上传图片）
 func AdminUpdateCategory(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 32)
 
-	var category model.CategoryModel
-	if err := db.Get().Where("id = ?", id).First(&category).Error; err != nil {
+	var existingCategory model.CategoryModel
+	if err := db.Get().Where("id = ?", id).First(&existingCategory).Error; err != nil {
 		utils.Error(404, "分类不存在").WriteJSON(c.Writer)
 		return
 	}
 
-	if err := c.ShouldBindJSON(&category); err != nil {
-		utils.Error(400, "参数错误: "+err.Error()).WriteJSON(c.Writer)
+	name, sort, status := parseCategoryFormData(c)
+
+	if name == "" {
+		utils.Error(400, "分类名称不能为空").WriteJSON(c.Writer)
 		return
 	}
 
-	category.Id = int32(id)
+	iconID, errMsg := processCategoryIcon(c, existingCategory.IconId)
+	if errMsg != "" {
+		utils.Error(400, errMsg).WriteJSON(c.Writer)
+		return
+	}
+
+	category := buildCategoryModel(int32(id), name, iconID, sort, status)
+
 	if err := db.Get().Save(&category).Error; err != nil {
 		utils.Error(500, "更新失败: "+err.Error()).WriteJSON(c.Writer)
 		return
 	}
 
-	utils.Success(category).WriteJSON(c.Writer)
+	baseURL := getBaseURL(c)
+	categoryDTO := ToCategoryDTO(category, baseURL)
+	utils.Success(categoryDTO).WriteJSON(c.Writer)
 }
 
 // AdminDeleteCategory 删除分类

@@ -48,50 +48,72 @@ func AdminGetProductList(c *gin.Context) {
 	}).WriteJSON(c.Writer)
 }
 
-// AdminCreateProduct 创建商品
+// AdminCreateProduct 创建商品（支持multipart/form-data，可同时上传图片）
 func AdminCreateProduct(c *gin.Context) {
-	var product model.ProductModel
-	if err := c.ShouldBindJSON(&product); err != nil {
-		utils.Error(400, "参数错误: "+err.Error()).WriteJSON(c.Writer)
+	name, subtitle, description, detail, categoryId, stock, sort, status, isHot, isNew, price, originalPrice := parseProductFormData(c)
+
+	if name == "" {
+		utils.Error(400, "商品名称不能为空").WriteJSON(c.Writer)
 		return
 	}
+
+	mainImageID, errMsg := processProductMainImage(c, 0)
+	if errMsg != "" {
+		utils.Error(400, errMsg).WriteJSON(c.Writer)
+		return
+	}
+
+	product := buildProductModel(
+		0, name, subtitle, description, detail,
+		categoryId, int(mainImageID), stock, sort, status, isHot, isNew,
+		price, originalPrice,
+	)
 
 	if err := db.Get().Create(&product).Error; err != nil {
 		utils.Error(500, "创建失败: "+err.Error()).WriteJSON(c.Writer)
 		return
 	}
 
-	// 获取请求的基础URL
 	baseURL := getBaseURL(c)
-
 	productDTO := ToProductDTO(product, baseURL)
 	utils.Success(productDTO).WriteJSON(c.Writer)
 }
 
-// AdminUpdateProduct 更新商品
+// AdminUpdateProduct 更新商品（支持multipart/form-data，可同时上传图片）
 func AdminUpdateProduct(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 32)
 
-	var product model.ProductModel
-	if err := db.Get().Where("id = ?", id).First(&product).Error; err != nil {
+	var existingProduct model.ProductModel
+	if err := db.Get().Where("id = ?", id).First(&existingProduct).Error; err != nil {
 		utils.Error(404, "商品不存在").WriteJSON(c.Writer)
 		return
 	}
 
-	if err := c.ShouldBindJSON(&product); err != nil {
-		utils.Error(400, "参数错误: "+err.Error()).WriteJSON(c.Writer)
+	name, subtitle, description, detail, categoryId, stock, sort, status, isHot, isNew, price, originalPrice := parseProductFormData(c)
+
+	if name == "" {
+		utils.Error(400, "商品名称不能为空").WriteJSON(c.Writer)
 		return
 	}
 
-	product.Id = int32(id)
+	mainImageID, errMsg := processProductMainImage(c, existingProduct.MainImageId)
+	if errMsg != "" {
+		utils.Error(400, errMsg).WriteJSON(c.Writer)
+		return
+	}
+
+	product := buildProductModel(
+		int32(id), name, subtitle, description, detail,
+		categoryId, int(mainImageID), stock, sort, status, isHot, isNew,
+		price, originalPrice,
+	)
+
 	if err := db.Get().Save(&product).Error; err != nil {
 		utils.Error(500, "更新失败: "+err.Error()).WriteJSON(c.Writer)
 		return
 	}
 
-	// 获取请求的基础URL
 	baseURL := getBaseURL(c)
-
 	productDTO := ToProductDTO(product, baseURL)
 	utils.Success(productDTO).WriteJSON(c.Writer)
 }
