@@ -29,6 +29,9 @@ func SetupRouter() *gin.Engine {
 	r.GET("/", api.IndexHandler)
 	r.GET("/health", api.HealthHandler)
 
+	// 静态文件服务（用于访问上传的图片）
+	r.Static("/images", "./images")
+
 	// API路由组
 	apiGroup := r.Group("/api")
 	{
@@ -55,6 +58,9 @@ func SetupRouter() *gin.Engine {
 
 		// 分类相关
 		apiGroup.GET("/category/list", api.GetCategoryList)
+
+		// Banner相关
+		apiGroup.GET("/banner/list", api.GetBannerList)
 
 		// 购物车相关
 		cartGroup := apiGroup.Group("/cart")
@@ -177,6 +183,15 @@ func SetupRouter() *gin.Engine {
 			adminGroup.POST("/lottery", api.AdminCreateLottery)
 			adminGroup.PUT("/lottery/:id", api.AdminUpdateLottery)
 			adminGroup.GET("/lottery/records", api.AdminGetLotteryRecords)
+
+			// Banner管理
+			adminGroup.GET("/banner/list", api.AdminGetBannerList)
+			adminGroup.POST("/banner", api.AdminCreateBanner)
+			adminGroup.PUT("/banner/:id", api.AdminUpdateBanner)
+			adminGroup.DELETE("/banner/:id", api.AdminDeleteBanner)
+
+			// 文件上传
+			adminGroup.POST("/upload/image", api.AdminUploadImage)
 		}
 	}
 

@@ -13,6 +13,7 @@ import (
 func GetProductList(c *gin.Context) {
 	categoryId := c.Query("categoryId")
 	keyword := c.Query("keyword")
+	isHot := c.Query("isHot")
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
 
@@ -24,6 +25,10 @@ func GetProductList(c *gin.Context) {
 
 	if keyword != "" {
 		query = query.Where("name LIKE ?", "%"+keyword+"%")
+	}
+
+	if isHot == "1" {
+		query = query.Where("is_hot = ?", 1)
 	}
 
 	var total int64

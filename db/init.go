@@ -102,6 +102,7 @@ func AutoMigrate() error {
 		&model.UserCouponModel{},
 		&model.LotteryModel{},
 		&model.LotteryRecordModel{},
+		&model.BannerModel{},
 	)
 }
 
