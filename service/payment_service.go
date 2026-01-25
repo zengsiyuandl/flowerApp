@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"wxcloudrun-golang/utils"
 )
 
 const (
