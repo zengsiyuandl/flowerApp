@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -58,10 +59,23 @@ func GetBaseURLFromRequest(scheme, host string) string {
 	if host == "" {
 		return ""
 	}
-	// 如果scheme为空，默认使用https（云托管通常使用https）
-	if scheme == "" {
+	
+	// 清理host，移除可能包含的协议信息
+	host = strings.TrimSpace(host)
+	if strings.HasPrefix(host, "http://") {
+		host = strings.TrimPrefix(host, "http://")
+		scheme = "http"
+	} else if strings.HasPrefix(host, "https://") {
+		host = strings.TrimPrefix(host, "https://")
 		scheme = "https"
 	}
+	
+	// 验证和清理scheme，确保只能是http或https
+	scheme = strings.ToLower(strings.TrimSpace(scheme))
+	if scheme != "http" && scheme != "https" {
+		scheme = "https" // 默认使用https（云托管通常使用https）
+	}
+	
 	return scheme + "://" + host
 }
 

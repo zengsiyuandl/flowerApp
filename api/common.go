@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 	"wxcloudrun-golang/utils"
 
 	"github.com/gin-gonic/gin"
@@ -23,6 +24,7 @@ func getBaseURL(c *gin.Context) string {
 	if scheme == "" {
 		scheme = c.Request.URL.Scheme
 	}
+	
 	host := c.GetHeader("X-Forwarded-Host")
 	if host == "" {
 		host = c.GetHeader("Host")
@@ -30,6 +32,10 @@ func getBaseURL(c *gin.Context) string {
 	if host == "" {
 		host = c.Request.Host
 	}
+	
+	// 清理host，移除可能包含的协议信息
+	host = strings.TrimSpace(host)
+	
 	return utils.GetBaseURLFromRequest(scheme, host)
 }
 
