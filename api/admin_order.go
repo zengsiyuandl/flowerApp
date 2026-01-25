@@ -68,7 +68,16 @@ func AdminShipOrder(c *gin.Context) {
 		DeliveryType: 1, // 自营配送
 		Status:       1, // 已分配
 	}
-	db.Get().Create(&delivery)
+	// 使用 Select 明确指定要插入的字段，排除 start_time 和 complete_time，避免 MySQL 报错
+	fieldsToSelect := []string{
+		"order_id", "order_no", "delivery_type", "delivery_man_id", "delivery_man_name",
+		"delivery_man_phone", "third_party_order_no", "status",
+		"created_at", "updated_at",
+	}
+	if err := db.Get().Select(fieldsToSelect).Create(&delivery).Error; err != nil {
+		utils.Error(500, "创建配送记录失败").WriteJSON(c.Writer)
+		return
+	}
 
 	utils.Success(nil).WriteJSON(c.Writer)
 }

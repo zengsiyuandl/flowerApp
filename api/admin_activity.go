@@ -32,6 +32,12 @@ func AdminCreateActivity(c *gin.Context) {
 		return
 	}
 
+	// 检查时间是否有效（避免零值时间导致数据库错误）
+	if startTime.IsZero() || endTime.IsZero() {
+		utils.Error(400, "开始时间和结束时间不能为空").WriteJSON(c.Writer)
+		return
+	}
+
 	activity := buildActivityModel(
 		0, title, content, imageID, startTime, endTime, sort, status,
 	)

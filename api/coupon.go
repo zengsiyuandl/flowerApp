@@ -102,7 +102,12 @@ func ReceiveCoupon(c *gin.Context) {
 		ExpireTime: coupon.EndTime,
 	}
 
-	if err := db.Get().Create(&userCoupon).Error; err != nil {
+	// 使用 Select 明确指定要插入的字段，排除 used_time，避免 MySQL 报错
+	fieldsToSelect := []string{
+		"user_id", "coupon_id", "status", "expire_time", "order_id",
+		"created_at", "updated_at",
+	}
+	if err := db.Get().Select(fieldsToSelect).Create(&userCoupon).Error; err != nil {
 		utils.Error(500, "领取失败").WriteJSON(c.Writer)
 		return
 	}

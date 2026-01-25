@@ -59,7 +59,12 @@ func CreateRecharge(c *gin.Context) {
 		Status:     0, // 待支付
 	}
 
-	if err := db.Get().Create(&payment).Error; err != nil {
+	// 使用 Select 明确指定要插入的字段，排除 pay_time，避免 MySQL 报错
+	fieldsToSelect := []string{
+		"order_no", "order_id", "user_id", "payment_type", "amount", "trade_no", "status",
+		"created_at", "updated_at",
+	}
+	if err := db.Get().Select(fieldsToSelect).Create(&payment).Error; err != nil {
 		utils.Error(500, "创建支付记录失败").WriteJSON(c.Writer)
 		return
 	}

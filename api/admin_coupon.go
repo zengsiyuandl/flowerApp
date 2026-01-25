@@ -25,6 +25,12 @@ func AdminCreateCoupon(c *gin.Context) {
 		return
 	}
 
+	// 检查时间是否有效（避免零值时间导致数据库错误）
+	if coupon.StartTime.IsZero() || coupon.EndTime.IsZero() {
+		utils.Error(400, "开始时间和结束时间不能为空").WriteJSON(c.Writer)
+		return
+	}
+
 	if err := db.Get().Create(&coupon).Error; err != nil {
 		utils.Error(500, "创建失败: "+err.Error()).WriteJSON(c.Writer)
 		return
