@@ -18,13 +18,26 @@ func AdminGetBannerList(c *gin.Context) {
 	utils.Success(bannerDTOs).WriteJSON(c.Writer)
 }
 
-// AdminCreateBanner 创建Banner
+// AdminCreateBanner 创建Banner（支持multipart/form-data，可同时上传图片）
 func AdminCreateBanner(c *gin.Context) {
-	var banner model.BannerModel
-	if err := c.ShouldBindJSON(&banner); err != nil {
-		utils.Error(400, "参数错误: "+err.Error()).WriteJSON(c.Writer)
+	// 解析表单数据
+	title, linkType, linkValue, sort, status := parseBannerFormData(c)
+
+	// 验证必填字段
+	if title == "" {
+		utils.Error(400, "标题不能为空").WriteJSON(c.Writer)
 		return
 	}
+
+	// 处理图片上传
+	imageID, errMsg := processBannerImage(c, 0)
+	if errMsg != "" {
+		utils.Error(400, errMsg).WriteJSON(c.Writer)
+		return
+	}
+
+	// 创建Banner
+	banner := buildBannerModel(0, title, imageID, linkType, linkValue, sort, status)
 
 	if err := db.Get().Create(&banner).Error; err != nil {
 		utils.Error(500, "创建失败: "+err.Error()).WriteJSON(c.Writer)
@@ -35,22 +48,36 @@ func AdminCreateBanner(c *gin.Context) {
 	utils.Success(bannerDTO).WriteJSON(c.Writer)
 }
 
-// AdminUpdateBanner 更新Banner
+// AdminUpdateBanner 更新Banner（支持multipart/form-data，可同时上传图片）
 func AdminUpdateBanner(c *gin.Context) {
 	id, _ := strconv.ParseInt(c.Param("id"), 10, 32)
 
-	var banner model.BannerModel
-	if err := db.Get().Where("id = ?", id).First(&banner).Error; err != nil {
+	// 检查Banner是否存在
+	var existingBanner model.BannerModel
+	if err := db.Get().Where("id = ?", id).First(&existingBanner).Error; err != nil {
 		utils.Error(404, "Banner不存在").WriteJSON(c.Writer)
 		return
 	}
 
-	if err := c.ShouldBindJSON(&banner); err != nil {
-		utils.Error(400, "参数错误: "+err.Error()).WriteJSON(c.Writer)
+	// 解析表单数据
+	title, linkType, linkValue, sort, status := parseBannerFormData(c)
+
+	// 验证必填字段
+	if title == "" {
+		utils.Error(400, "标题不能为空").WriteJSON(c.Writer)
 		return
 	}
 
-	banner.Id = int32(id)
+	// 处理图片上传
+	imageID, errMsg := processBannerImage(c, existingBanner.ImageId)
+	if errMsg != "" {
+		utils.Error(400, errMsg).WriteJSON(c.Writer)
+		return
+	}
+
+	// 更新Banner
+	banner := buildBannerModel(int32(id), title, imageID, linkType, linkValue, sort, status)
+
 	if err := db.Get().Save(&banner).Error; err != nil {
 		utils.Error(500, "更新失败: "+err.Error()).WriteJSON(c.Writer)
 		return

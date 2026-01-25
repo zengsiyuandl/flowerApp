@@ -20,44 +20,32 @@ var (
 	allowedExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
 )
 
-// AdminUploadImage 上传图片到数据库
-func AdminUploadImage(c *gin.Context) {
-	category := c.DefaultQuery("category", "banner")
-
+// UploadImageToDB 上传图片到数据库（内部函数，供其他接口复用）
+// 返回图片ID和错误信息
+func UploadImageToDB(file *gin.MultipartHeader, category string) (int32, string) {
 	if !isAllowedCategory(category) {
-		utils.Error(400, "不支持的分类").WriteJSON(c.Writer)
-		return
-	}
-
-	file, err := c.FormFile("file")
-	if err != nil {
-		utils.Error(400, "获取文件失败: "+err.Error()).WriteJSON(c.Writer)
-		return
+		return 0, "不支持的分类"
 	}
 
 	if file.Size > maxFileSizeBytes {
-		utils.Error(400, "文件大小不能超过2MB").WriteJSON(c.Writer)
-		return
+		return 0, "文件大小不能超过2MB"
 	}
 
 	ext := filepath.Ext(file.Filename)
 	if !isAllowedFormat(ext) {
-		utils.Error(400, "不支持的文件格式").WriteJSON(c.Writer)
-		return
+		return 0, "不支持的文件格式"
 	}
 
 	// 读取文件数据
 	src, err := file.Open()
 	if err != nil {
-		utils.Error(500, "打开文件失败: "+err.Error()).WriteJSON(c.Writer)
-		return
+		return 0, "打开文件失败: " + err.Error()
 	}
 	defer src.Close()
 
 	data, err := io.ReadAll(src)
 	if err != nil {
-		utils.Error(500, "读取文件失败: "+err.Error()).WriteJSON(c.Writer)
-		return
+		return 0, "读取文件失败: " + err.Error()
 	}
 
 	// 确定Content-Type
@@ -76,14 +64,31 @@ func AdminUploadImage(c *gin.Context) {
 	}
 
 	if err := db.Get().Create(&imageStorage).Error; err != nil {
-		utils.Error(500, "保存图片失败: "+err.Error()).WriteJSON(c.Writer)
+		return 0, "保存图片失败: " + err.Error()
+	}
+
+	return imageStorage.Id, ""
+}
+
+// AdminUploadImage 上传图片到数据库（独立上传接口，保留用于其他场景）
+func AdminUploadImage(c *gin.Context) {
+	category := c.DefaultQuery("category", "banner")
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		utils.Error(400, "获取文件失败: "+err.Error()).WriteJSON(c.Writer)
 		return
 	}
 
-	// 返回图片ID和URL
-	imageURL := utils.FormatImageURL(imageStorage.Id)
+	imageID, errMsg := UploadImageToDB(file, category)
+	if errMsg != "" {
+		utils.Error(400, errMsg).WriteJSON(c.Writer)
+		return
+	}
+
+	imageURL := utils.FormatImageURL(imageID)
 	utils.Success(map[string]interface{}{
-		"id":  imageStorage.Id,
+		"id":  imageID,
 		"url": imageURL,
 	}).WriteJSON(c.Writer)
 }
