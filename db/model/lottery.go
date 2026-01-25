@@ -6,7 +6,7 @@ import "time"
 type LotteryModel struct {
 	Id        int32     `gorm:"column:id;primaryKey;autoIncrement" json:"id"`
 	Name      string    `gorm:"column:name;size:128" json:"name"` // 活动名称
-	Image     string    `gorm:"column:image;size:255" json:"image"` // 活动图片
+	ImageId   int32     `gorm:"column:image_id" json:"imageId"`     // 活动图片ID
 	Rule      string    `gorm:"column:rule;type:text" json:"rule"` // 活动规则
 	StartTime time.Time `gorm:"column:start_time" json:"startTime"` // 开始时间
 	EndTime   time.Time `gorm:"column:end_time" json:"endTime"` // 结束时间

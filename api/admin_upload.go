@@ -1,70 +1,52 @@
 package api
 
 import (
-	"fmt"
 	"io"
-	"os"
+	"mime"
 	"path/filepath"
-	"time"
+	"wxcloudrun-golang/db"
+	"wxcloudrun-golang/db/model"
 	"wxcloudrun-golang/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	maxFileSize    = 5 * 1024 * 1024 // 5MB
-	allowedFormats = ".jpg,.jpeg,.png,.gif,.webp"
+	maxFileSizeBytes = 2 * 1024 * 1024 // 2MB
 )
 
-// 允许的分类
-var allowedCategories = []string{"banner", "goods", "category", "activity", "user"}
+var (
+	allowedCategories = []string{"banner", "goods", "category", "activity", "user"}
+	allowedExtensions = []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
+)
 
-// AdminUploadImage 上传图片
+// AdminUploadImage 上传图片到数据库
 func AdminUploadImage(c *gin.Context) {
-	// 获取分类参数，默认为banner
 	category := c.DefaultQuery("category", "banner")
-	
-	// 验证分类是否合法
+
 	if !isAllowedCategory(category) {
-		utils.Error(400, "不支持的分类，仅支持: banner, goods, category, activity, user").WriteJSON(c.Writer)
+		utils.Error(400, "不支持的分类").WriteJSON(c.Writer)
 		return
 	}
 
-	// 获取上传的文件
 	file, err := c.FormFile("file")
 	if err != nil {
 		utils.Error(400, "获取文件失败: "+err.Error()).WriteJSON(c.Writer)
 		return
 	}
 
-	// 检查文件大小
-	if file.Size > maxFileSize {
-		utils.Error(400, "文件大小不能超过5MB").WriteJSON(c.Writer)
+	if file.Size > maxFileSizeBytes {
+		utils.Error(400, "文件大小不能超过2MB").WriteJSON(c.Writer)
 		return
 	}
 
-	// 检查文件格式
 	ext := filepath.Ext(file.Filename)
 	if !isAllowedFormat(ext) {
-		utils.Error(400, "不支持的文件格式，仅支持: "+allowedFormats).WriteJSON(c.Writer)
+		utils.Error(400, "不支持的文件格式").WriteJSON(c.Writer)
 		return
 	}
 
-	// 获取存储路径（支持环境变量配置，用于持久化存储）
-	baseUploadDir := utils.GetStoragePath()
-	
-	// 创建分类目录
-	uploadDir := filepath.Join(baseUploadDir, category)
-	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		utils.Error(500, "创建上传目录失败: "+err.Error()).WriteJSON(c.Writer)
-		return
-	}
-
-	// 生成唯一文件名
-	filename := generateFilename(ext)
-	filePath := filepath.Join(uploadDir, filename)
-
-	// 保存文件
+	// 读取文件数据
 	src, err := file.Open()
 	if err != nil {
 		utils.Error(500, "打开文件失败: "+err.Error()).WriteJSON(c.Writer)
@@ -72,30 +54,43 @@ func AdminUploadImage(c *gin.Context) {
 	}
 	defer src.Close()
 
-	dst, err := os.Create(filePath)
+	data, err := io.ReadAll(src)
 	if err != nil {
-		utils.Error(500, "创建文件失败: "+err.Error()).WriteJSON(c.Writer)
-		return
-	}
-	defer dst.Close()
-
-	if _, err := io.Copy(dst, src); err != nil {
-		utils.Error(500, "保存文件失败: "+err.Error()).WriteJSON(c.Writer)
+		utils.Error(500, "读取文件失败: "+err.Error()).WriteJSON(c.Writer)
 		return
 	}
 
-	// 返回文件URL
-	fileURL := fmt.Sprintf("/images/%s/%s", category, filename)
+	// 确定Content-Type
+	contentType := mime.TypeByExtension(ext)
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	// 保存到数据库
+	imageStorage := model.ImageStorageModel{
+		Category:    category,
+		Filename:    file.Filename,
+		ContentType: contentType,
+		Data:        data,
+		Size:        int(file.Size),
+	}
+
+	if err := db.Get().Create(&imageStorage).Error; err != nil {
+		utils.Error(500, "保存图片失败: "+err.Error()).WriteJSON(c.Writer)
+		return
+	}
+
+	// 返回图片ID和URL
+	imageURL := utils.FormatImageURL(imageStorage.Id)
 	utils.Success(map[string]interface{}{
-		"url": fileURL,
+		"id":  imageStorage.Id,
+		"url": imageURL,
 	}).WriteJSON(c.Writer)
 }
 
 // isAllowedFormat 检查文件格式是否允许
 func isAllowedFormat(ext string) bool {
-	allowed := []string{".jpg", ".jpeg", ".png", ".gif", ".webp"}
-	ext = filepath.Ext(ext)
-	for _, format := range allowed {
+	for _, format := range allowedExtensions {
 		if ext == format {
 			return true
 		}
@@ -111,10 +106,4 @@ func isAllowedCategory(category string) bool {
 		}
 	}
 	return false
-}
-
-// generateFilename 生成唯一文件名
-func generateFilename(ext string) string {
-	timestamp := time.Now().UnixNano()
-	return fmt.Sprintf("%d%s", timestamp, ext)
 }

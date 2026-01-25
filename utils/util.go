@@ -4,8 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"os"
-	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -31,23 +30,22 @@ func GenerateNonceStr() string {
 	return hex.EncodeToString(bytes)
 }
 
-// GetStoragePath 获取存储路径
-// 优先使用环境变量 STORAGE_PATH，如果未设置则使用默认路径 "images"
-// 在云托管中，可以设置 STORAGE_PATH 为持久化存储路径，如 "/data/images"
-func GetStoragePath() string {
-	storagePath := os.Getenv("STORAGE_PATH")
-	if storagePath == "" {
-		// 默认使用项目目录下的 images 文件夹（本地开发）
-		storagePath = "images"
+// ParseInt32 解析字符串为int32
+func ParseInt32(s string) (int32, error) {
+	val, err := strconv.ParseInt(s, 10, 32)
+	if err != nil {
+		return 0, err
 	}
-	// 确保路径是绝对路径或相对于工作目录的路径
-	if !filepath.IsAbs(storagePath) {
-		// 如果是相对路径，确保相对于当前工作目录
-		wd, err := os.Getwd()
-		if err == nil {
-			storagePath = filepath.Join(wd, storagePath)
-		}
-	}
-	return storagePath
+	return int32(val), nil
+}
+
+// IntToString 将int转换为string
+func IntToString(i int) string {
+	return strconv.Itoa(i)
+}
+
+// FormatImageURL 格式化图片URL
+func FormatImageURL(imageID int32) string {
+	return "/images/" + strconv.FormatInt(int64(imageID), 10)
 }
 

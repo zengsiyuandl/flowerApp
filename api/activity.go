@@ -18,7 +18,8 @@ func GetActivityList(c *gin.Context) {
 	db.Get().Where("status = ? AND start_time <= ? AND end_time >= ?", 1, now, now).
 		Order("sort DESC, id DESC").Find(&activities)
 
-	utils.Success(activities).WriteJSON(c.Writer)
+	activityDTOs := ToActivityDTOList(activities)
+	utils.Success(activityDTOs).WriteJSON(c.Writer)
 }
 
 // GetActivityDetail 获取活动详情
@@ -31,6 +32,7 @@ func GetActivityDetail(c *gin.Context) {
 		return
 	}
 
-	utils.Success(activity).WriteJSON(c.Writer)
+	activityDTO := ToActivityDTO(activity)
+	utils.Success(activityDTO).WriteJSON(c.Writer)
 }
 

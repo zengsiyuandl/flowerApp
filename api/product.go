@@ -38,8 +38,9 @@ func GetProductList(c *gin.Context) {
 	offset := (page - 1) * pageSize
 	query.Order("sort DESC, id DESC").Offset(offset).Limit(pageSize).Find(&products)
 
+	productDTOs := ToProductDTOList(products)
 	utils.Success(map[string]interface{}{
-		"list":     products,
+		"list":     productDTOs,
 		"total":    total,
 		"page":     page,
 		"pageSize": pageSize,
@@ -71,6 +72,7 @@ func GetCategoryList(c *gin.Context) {
 	var categories []model.CategoryModel
 	db.Get().Where("status = ?", 1).Order("sort DESC, id ASC").Find(&categories)
 
-	utils.Success(categories).WriteJSON(c.Writer)
+	categoryDTOs := ToCategoryDTOList(categories)
+	utils.Success(categoryDTOs).WriteJSON(c.Writer)
 }
 

@@ -46,8 +46,9 @@ func GetLotteryInfo(c *gin.Context) {
 		canDraw = false
 	}
 
+	lotteryDTO := ToLotteryDTO(lottery)
 	utils.Success(map[string]interface{}{
-		"lottery":    lottery,
+		"lottery":    lotteryDTO,
 		"todayCount": todayCount,
 		"totalCount": totalCount,
 		"canDraw":    canDraw,

@@ -15,5 +15,6 @@ func GetBannerList(c *gin.Context) {
 		Order("sort ASC, id DESC").
 		Find(&banners)
 
-	utils.Success(banners).WriteJSON(c.Writer)
+	bannerDTOs := ToBannerDTOList(banners)
+	utils.Success(bannerDTOs).WriteJSON(c.Writer)
 }

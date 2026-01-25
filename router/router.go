@@ -3,7 +3,6 @@ package router
 import (
 	"wxcloudrun-golang/api"
 	"wxcloudrun-golang/middleware"
-	"wxcloudrun-golang/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,11 +29,8 @@ func SetupRouter() *gin.Engine {
 	r.GET("/", api.IndexHandler)
 	r.GET("/health", api.HealthHandler)
 
-	// 静态文件服务（用于访问上传的图片）
-	// 使用环境变量配置的存储路径，支持持久化存储
-	// 在云托管中，可以设置 STORAGE_PATH 环境变量指向持久化存储路径
-	storagePath := utils.GetStoragePath()
-	r.Static("/images", storagePath)
+	// 图片服务（从数据库读取）
+	r.GET("/images/:id", api.GetImage)
 
 	// API路由组
 	apiGroup := r.Group("/api")

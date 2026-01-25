@@ -103,6 +103,7 @@ func AutoMigrate() error {
 		&model.LotteryModel{},
 		&model.LotteryRecordModel{},
 		&model.BannerModel{},
+		&model.ImageStorageModel{},
 	)
 }
 

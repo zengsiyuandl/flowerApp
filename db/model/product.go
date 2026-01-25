@@ -8,7 +8,7 @@ type ProductModel struct {
 	CategoryId  int32     `gorm:"column:category_id;index" json:"categoryId"` // 分类ID
 	Name        string    `gorm:"column:name;size:128" json:"name"` // 商品名称
 	Subtitle    string    `gorm:"column:subtitle;size:255" json:"subtitle"` // 副标题
-	MainImage   string    `gorm:"column:main_image;size:255" json:"mainImage"` // 主图
+	MainImageId int32     `gorm:"column:main_image_id" json:"mainImageId"`    // 主图ID
 	Price       float64   `gorm:"column:price;type:decimal(10,2)" json:"price"` // 价格
 	OriginalPrice float64 `gorm:"column:original_price;type:decimal(10,2)" json:"originalPrice"` // 原价
 	Stock       int       `gorm:"column:stock;default:0" json:"stock"` // 库存

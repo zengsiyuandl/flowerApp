@@ -72,13 +72,17 @@ func CreateOrder(c *gin.Context) {
 			itemAmount := float64(cartItem.Quantity) * product.Price
 			totalAmount += itemAmount
 
+			productImageURL := ""
+			if product.MainImageId > 0 {
+				productImageURL = utils.FormatImageURL(product.MainImageId)
+			}
 			orderItems = append(orderItems, model.OrderItemModel{
-				ProductId:   product.Id,
-				ProductName: product.Name,
-				ProductImage: product.MainImage,
-				Price:      product.Price,
-				Quantity:   cartItem.Quantity,
-				Amount:     itemAmount,
+				ProductId:    product.Id,
+				ProductName:  product.Name,
+				ProductImage: productImageURL,
+				Price:        product.Price,
+				Quantity:     cartItem.Quantity,
+				Amount:       itemAmount,
 			})
 		}
 	} else if req.ProductId > 0 {
@@ -99,13 +103,17 @@ func CreateOrder(c *gin.Context) {
 		itemAmount := float64(req.Quantity) * product.Price
 		totalAmount += itemAmount
 
+		productImageURL := ""
+		if product.MainImageId > 0 {
+			productImageURL = utils.FormatImageURL(product.MainImageId)
+		}
 		orderItems = append(orderItems, model.OrderItemModel{
-			ProductId:   product.Id,
-			ProductName: product.Name,
-			ProductImage: product.MainImage,
-			Price:      product.Price,
-			Quantity:   req.Quantity,
-			Amount:     itemAmount,
+			ProductId:    product.Id,
+			ProductName:  product.Name,
+			ProductImage: productImageURL,
+			Price:        product.Price,
+			Quantity:     req.Quantity,
+			Amount:       itemAmount,
 		})
 	} else {
 		tx.Rollback()
