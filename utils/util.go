@@ -44,8 +44,24 @@ func IntToString(i int) string {
 	return strconv.Itoa(i)
 }
 
-// FormatImageURL 格式化图片URL
-func FormatImageURL(imageID int32) string {
-	return "/images/" + strconv.FormatInt(int64(imageID), 10)
+// FormatImageURL 格式化图片URL（返回完整URL）
+func FormatImageURL(imageID int32, baseURL string) string {
+	// 确保baseURL不以/结尾
+	if len(baseURL) > 0 && baseURL[len(baseURL)-1] == '/' {
+		baseURL = baseURL[:len(baseURL)-1]
+	}
+	return baseURL + "/images/" + strconv.FormatInt(int64(imageID), 10)
+}
+
+// GetBaseURLFromRequest 从请求中获取基础URL
+func GetBaseURLFromRequest(scheme, host string) string {
+	if host == "" {
+		return ""
+	}
+	// 如果scheme为空，默认使用https（云托管通常使用https）
+	if scheme == "" {
+		scheme = "https"
+	}
+	return scheme + "://" + host
 }
 

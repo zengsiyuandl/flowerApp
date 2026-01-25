@@ -22,10 +22,10 @@ type ActivityDTO struct {
 }
 
 // ToActivityDTO 将ActivityModel转换为ActivityDTO
-func ToActivityDTO(activity model.ActivityModel) ActivityDTO {
+func ToActivityDTO(activity model.ActivityModel, baseURL string) ActivityDTO {
 	imageURL := ""
 	if activity.ImageId > 0 {
-		imageURL = utils.FormatImageURL(activity.ImageId)
+		imageURL = utils.FormatImageURL(activity.ImageId, baseURL)
 	}
 	return ActivityDTO{
 		Id:        activity.Id,
@@ -34,8 +34,8 @@ func ToActivityDTO(activity model.ActivityModel) ActivityDTO {
 		Content:   activity.Content,
 		ImageId:   activity.ImageId,
 		Image:     imageURL,
-		StartTime: utils.FormatTime(activity.StartTime),
-		EndTime:   utils.FormatTime(activity.EndTime),
+		StartTime:  utils.FormatTime(activity.StartTime),
+		EndTime:    utils.FormatTime(activity.EndTime),
 		Status:    activity.Status,
 		Sort:      activity.Sort,
 		CreatedAt: utils.FormatTime(activity.CreatedAt),
@@ -44,10 +44,10 @@ func ToActivityDTO(activity model.ActivityModel) ActivityDTO {
 }
 
 // ToActivityDTOList 将ActivityModel列表转换为ActivityDTO列表
-func ToActivityDTOList(activities []model.ActivityModel) []ActivityDTO {
+func ToActivityDTOList(activities []model.ActivityModel, baseURL string) []ActivityDTO {
 	result := make([]ActivityDTO, len(activities))
 	for i, activity := range activities {
-		result[i] = ToActivityDTO(activity)
+		result[i] = ToActivityDTO(activity, baseURL)
 	}
 	return result
 }

@@ -15,6 +15,9 @@ func GetBannerList(c *gin.Context) {
 		Order("sort ASC, id DESC").
 		Find(&banners)
 
-	bannerDTOs := ToBannerDTOList(banners)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	bannerDTOs := ToBannerDTOList(banners, baseURL)
 	utils.Success(bannerDTOs).WriteJSON(c.Writer)
 }

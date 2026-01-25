@@ -20,10 +20,10 @@ type BannerDTO struct {
 }
 
 // ToBannerDTO 将BannerModel转换为BannerDTO
-func ToBannerDTO(banner model.BannerModel) BannerDTO {
+func ToBannerDTO(banner model.BannerModel, baseURL string) BannerDTO {
 	imageURL := ""
 	if banner.ImageId > 0 {
-		imageURL = utils.FormatImageURL(banner.ImageId)
+		imageURL = utils.FormatImageURL(banner.ImageId, baseURL)
 	}
 	return BannerDTO{
 		Id:        banner.Id,
@@ -40,10 +40,10 @@ func ToBannerDTO(banner model.BannerModel) BannerDTO {
 }
 
 // ToBannerDTOList 将BannerModel列表转换为BannerDTO列表
-func ToBannerDTOList(banners []model.BannerModel) []BannerDTO {
+func ToBannerDTOList(banners []model.BannerModel, baseURL string) []BannerDTO {
 	result := make([]BannerDTO, len(banners))
 	for i, banner := range banners {
-		result[i] = ToBannerDTO(banner)
+		result[i] = ToBannerDTO(banner, baseURL)
 	}
 	return result
 }

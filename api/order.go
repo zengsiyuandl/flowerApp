@@ -72,9 +72,11 @@ func CreateOrder(c *gin.Context) {
 			itemAmount := float64(cartItem.Quantity) * product.Price
 			totalAmount += itemAmount
 
+			// 获取请求的基础URL
+			baseURL := getBaseURL(c)
 			productImageURL := ""
-			if product.MainImageId > 0 {
-				productImageURL = utils.FormatImageURL(product.MainImageId)
+			if product.MainImageId > 0 && baseURL != "" {
+				productImageURL = utils.FormatImageURL(product.MainImageId, baseURL)
 			}
 			orderItems = append(orderItems, model.OrderItemModel{
 				ProductId:    product.Id,
@@ -103,9 +105,11 @@ func CreateOrder(c *gin.Context) {
 		itemAmount := float64(req.Quantity) * product.Price
 		totalAmount += itemAmount
 
+		// 获取请求的基础URL
+		baseURL := getBaseURL(c)
 		productImageURL := ""
-		if product.MainImageId > 0 {
-			productImageURL = utils.FormatImageURL(product.MainImageId)
+		if product.MainImageId > 0 && baseURL != "" {
+			productImageURL = utils.FormatImageURL(product.MainImageId, baseURL)
 		}
 		orderItems = append(orderItems, model.OrderItemModel{
 			ProductId:    product.Id,

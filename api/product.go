@@ -38,7 +38,10 @@ func GetProductList(c *gin.Context) {
 	offset := (page - 1) * pageSize
 	query.Order("sort DESC, id DESC").Offset(offset).Limit(pageSize).Find(&products)
 
-	productDTOs := ToProductDTOList(products)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	productDTOs := ToProductDTOList(products, baseURL)
 	utils.Success(map[string]interface{}{
 		"list":     productDTOs,
 		"total":    total,
@@ -61,9 +64,16 @@ func GetProductDetail(c *gin.Context) {
 	var images []model.ProductImageModel
 	db.Get().Where("product_id = ?", id).Order("sort ASC").Find(&images)
 
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	// 转换商品和图片为DTO
+	productDTO := ToProductDTO(product, baseURL)
+	imageDTOs := ToProductImageDTOList(images, baseURL)
+
 	utils.Success(map[string]interface{}{
-		"product": product,
-		"images":  images,
+		"product": productDTO,
+		"images":  imageDTOs,
 	}).WriteJSON(c.Writer)
 }
 
@@ -72,7 +82,10 @@ func GetCategoryList(c *gin.Context) {
 	var categories []model.CategoryModel
 	db.Get().Where("status = ?", 1).Order("sort DESC, id ASC").Find(&categories)
 
-	categoryDTOs := ToCategoryDTOList(categories)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	categoryDTOs := ToCategoryDTOList(categories, baseURL)
 	utils.Success(categoryDTOs).WriteJSON(c.Writer)
 }
 

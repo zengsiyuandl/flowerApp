@@ -36,8 +36,12 @@ func AdminGetProductList(c *gin.Context) {
 	offset := (page - 1) * pageSize
 	query.Order("id DESC").Offset(offset).Limit(pageSize).Find(&products)
 
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	productDTOs := ToProductDTOList(products, baseURL)
 	utils.Success(map[string]interface{}{
-		"list":     products,
+		"list":     productDTOs,
 		"total":    total,
 		"page":     page,
 		"pageSize": pageSize,
@@ -57,7 +61,11 @@ func AdminCreateProduct(c *gin.Context) {
 		return
 	}
 
-	utils.Success(product).WriteJSON(c.Writer)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	productDTO := ToProductDTO(product, baseURL)
+	utils.Success(productDTO).WriteJSON(c.Writer)
 }
 
 // AdminUpdateProduct 更新商品
@@ -81,7 +89,11 @@ func AdminUpdateProduct(c *gin.Context) {
 		return
 	}
 
-	utils.Success(product).WriteJSON(c.Writer)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	productDTO := ToProductDTO(product, baseURL)
+	utils.Success(productDTO).WriteJSON(c.Writer)
 }
 
 // AdminDeleteProduct 删除商品
@@ -103,7 +115,11 @@ func AdminGetProductImages(c *gin.Context) {
 	var images []model.ProductImageModel
 	db.Get().Where("product_id = ?", productId).Order("sort ASC").Find(&images)
 
-	utils.Success(images).WriteJSON(c.Writer)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	imageDTOs := ToProductImageDTOList(images, baseURL)
+	utils.Success(imageDTOs).WriteJSON(c.Writer)
 }
 
 // AdminAddProductImage 添加商品图片
@@ -122,7 +138,11 @@ func AdminAddProductImage(c *gin.Context) {
 		return
 	}
 
-	utils.Success(image).WriteJSON(c.Writer)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	imageDTO := ToProductImageDTO(image, baseURL)
+	utils.Success(imageDTO).WriteJSON(c.Writer)
 }
 
 // AdminDeleteProductImage 删除商品图片

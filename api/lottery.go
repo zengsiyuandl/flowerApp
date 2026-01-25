@@ -46,7 +46,10 @@ func GetLotteryInfo(c *gin.Context) {
 		canDraw = false
 	}
 
-	lotteryDTO := ToLotteryDTO(lottery)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	lotteryDTO := ToLotteryDTO(lottery, baseURL)
 	utils.Success(map[string]interface{}{
 		"lottery":    lotteryDTO,
 		"todayCount": todayCount,

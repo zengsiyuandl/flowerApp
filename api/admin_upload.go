@@ -87,7 +87,14 @@ func AdminUploadImage(c *gin.Context) {
 		return
 	}
 
-	imageURL := utils.FormatImageURL(imageID)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+	
+	var imageURL string
+	if baseURL != "" {
+		imageURL = utils.FormatImageURL(imageID, baseURL)
+	}
+	
 	utils.Success(map[string]interface{}{
 		"id":  imageID,
 		"url": imageURL,

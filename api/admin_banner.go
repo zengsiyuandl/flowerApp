@@ -14,7 +14,10 @@ func AdminGetBannerList(c *gin.Context) {
 	var banners []model.BannerModel
 	db.Get().Order("sort ASC, id DESC").Find(&banners)
 
-	bannerDTOs := ToBannerDTOList(banners)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	bannerDTOs := ToBannerDTOList(banners, baseURL)
 	utils.Success(bannerDTOs).WriteJSON(c.Writer)
 }
 
@@ -44,7 +47,10 @@ func AdminCreateBanner(c *gin.Context) {
 		return
 	}
 
-	bannerDTO := ToBannerDTO(banner)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	bannerDTO := ToBannerDTO(banner, baseURL)
 	utils.Success(bannerDTO).WriteJSON(c.Writer)
 }
 
@@ -83,7 +89,10 @@ func AdminUpdateBanner(c *gin.Context) {
 		return
 	}
 
-	bannerDTO := ToBannerDTO(banner)
+	// 获取请求的基础URL
+	baseURL := getBaseURL(c)
+
+	bannerDTO := ToBannerDTO(banner, baseURL)
 	utils.Success(bannerDTO).WriteJSON(c.Writer)
 }
 

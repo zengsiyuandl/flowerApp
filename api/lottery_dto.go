@@ -22,10 +22,10 @@ type LotteryDTO struct {
 }
 
 // ToLotteryDTO 将LotteryModel转换为LotteryDTO
-func ToLotteryDTO(lottery model.LotteryModel) LotteryDTO {
+func ToLotteryDTO(lottery model.LotteryModel, baseURL string) LotteryDTO {
 	imageURL := ""
 	if lottery.ImageId > 0 {
-		imageURL = utils.FormatImageURL(lottery.ImageId)
+		imageURL = utils.FormatImageURL(lottery.ImageId, baseURL)
 	}
 	return LotteryDTO{
 		Id:         lottery.Id,

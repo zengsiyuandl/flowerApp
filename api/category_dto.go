@@ -18,10 +18,10 @@ type CategoryDTO struct {
 }
 
 // ToCategoryDTO 将CategoryModel转换为CategoryDTO
-func ToCategoryDTO(category model.CategoryModel) CategoryDTO {
+func ToCategoryDTO(category model.CategoryModel, baseURL string) CategoryDTO {
 	iconURL := ""
 	if category.IconId > 0 {
-		iconURL = utils.FormatImageURL(category.IconId)
+		iconURL = utils.FormatImageURL(category.IconId, baseURL)
 	}
 	return CategoryDTO{
 		Id:        category.Id,
@@ -36,10 +36,10 @@ func ToCategoryDTO(category model.CategoryModel) CategoryDTO {
 }
 
 // ToCategoryDTOList 将CategoryModel列表转换为CategoryDTO列表
-func ToCategoryDTOList(categories []model.CategoryModel) []CategoryDTO {
+func ToCategoryDTOList(categories []model.CategoryModel, baseURL string) []CategoryDTO {
 	result := make([]CategoryDTO, len(categories))
 	for i, category := range categories {
-		result[i] = ToCategoryDTO(category)
+		result[i] = ToCategoryDTO(category, baseURL)
 	}
 	return result
 }

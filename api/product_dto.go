@@ -28,10 +28,10 @@ type ProductDTO struct {
 }
 
 // ToProductDTO 将ProductModel转换为ProductDTO
-func ToProductDTO(product model.ProductModel) ProductDTO {
+func ToProductDTO(product model.ProductModel, baseURL string) ProductDTO {
 	mainImageURL := ""
 	if product.MainImageId > 0 {
-		mainImageURL = utils.FormatImageURL(product.MainImageId)
+		mainImageURL = utils.FormatImageURL(product.MainImageId, baseURL)
 	}
 	return ProductDTO{
 		Id:            product.Id,
@@ -56,10 +56,10 @@ func ToProductDTO(product model.ProductModel) ProductDTO {
 }
 
 // ToProductDTOList 将ProductModel列表转换为ProductDTO列表
-func ToProductDTOList(products []model.ProductModel) []ProductDTO {
+func ToProductDTOList(products []model.ProductModel, baseURL string) []ProductDTO {
 	result := make([]ProductDTO, len(products))
 	for i, product := range products {
-		result[i] = ToProductDTO(product)
+		result[i] = ToProductDTO(product, baseURL)
 	}
 	return result
 }
@@ -75,10 +75,10 @@ type ProductImageDTO struct {
 }
 
 // ToProductImageDTO 将ProductImageModel转换为ProductImageDTO
-func ToProductImageDTO(image model.ProductImageModel) ProductImageDTO {
+func ToProductImageDTO(image model.ProductImageModel, baseURL string) ProductImageDTO {
 	imageURL := ""
 	if image.ImageId > 0 {
-		imageURL = utils.FormatImageURL(image.ImageId)
+		imageURL = utils.FormatImageURL(image.ImageId, baseURL)
 	}
 	return ProductImageDTO{
 		Id:        image.Id,
@@ -91,10 +91,10 @@ func ToProductImageDTO(image model.ProductImageModel) ProductImageDTO {
 }
 
 // ToProductImageDTOList 将ProductImageModel列表转换为ProductImageDTO列表
-func ToProductImageDTOList(images []model.ProductImageModel) []ProductImageDTO {
+func ToProductImageDTOList(images []model.ProductImageModel, baseURL string) []ProductImageDTO {
 	result := make([]ProductImageDTO, len(images))
 	for i, image := range images {
-		result[i] = ToProductImageDTO(image)
+		result[i] = ToProductImageDTO(image, baseURL)
 	}
 	return result
 }
