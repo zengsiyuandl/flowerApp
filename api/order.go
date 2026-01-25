@@ -168,8 +168,12 @@ func CreateOrder(c *gin.Context) {
 
 	// 解析配送时间
 	var deliveryTime time.Time
+	var hasDeliveryTime bool
 	if req.DeliveryTime != "" {
-		deliveryTime, _ = time.Parse("2006-01-02 15:04:05", req.DeliveryTime)
+		if parsedTime, err := time.Parse("2006-01-02 15:04:05", req.DeliveryTime); err == nil {
+			deliveryTime = parsedTime
+			hasDeliveryTime = true
+		}
 	}
 
 	// 创建订单
@@ -181,7 +185,6 @@ func CreateOrder(c *gin.Context) {
 		DiscountAmount: discountAmount,
 		PayAmount:      payAmount,
 		DeliveryType:   req.DeliveryType,
-		DeliveryTime:   deliveryTime,
 		AddressId:      req.AddressId,
 		ReceiverName:   receiverName,
 		ReceiverPhone:  receiverPhone,
@@ -192,7 +195,18 @@ func CreateOrder(c *gin.Context) {
 		PayStatus:     0,
 	}
 
-	if err := tx.Create(&order).Error; err != nil {
+	// 只有在有配送时间时才设置，避免零值时间导致数据库错误
+	if hasDeliveryTime {
+		order.DeliveryTime = deliveryTime
+	}
+
+	// 使用 Omit 排除零值时间字段，避免 MySQL 报错
+	createQuery := tx.Omit("pay_time", "ship_time", "complete_time")
+	if !hasDeliveryTime {
+		createQuery = createQuery.Omit("delivery_time")
+	}
+
+	if err := createQuery.Create(&order).Error; err != nil {
 		tx.Rollback()
 		utils.Error(500, "创建订单失败").WriteJSON(c.Writer)
 		return
