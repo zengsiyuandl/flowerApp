@@ -3,6 +3,7 @@ package api
 import (
 	"io"
 	"mime"
+	"mime/multipart"
 	"path/filepath"
 	"wxcloudrun-golang/db"
 	"wxcloudrun-golang/db/model"
@@ -22,7 +23,7 @@ var (
 
 // UploadImageToDB 上传图片到数据库（内部函数，供其他接口复用）
 // 返回图片ID和错误信息
-func UploadImageToDB(file *gin.MultipartHeader, category string) (int32, string) {
+func UploadImageToDB(file *multipart.FileHeader, category string) (int32, string) {
 	if !isAllowedCategory(category) {
 		return 0, "不支持的分类"
 	}
