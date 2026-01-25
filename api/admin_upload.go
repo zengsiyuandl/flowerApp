@@ -12,7 +12,6 @@ import (
 )
 
 const (
-	baseUploadDir  = "images"
 	maxFileSize    = 5 * 1024 * 1024 // 5MB
 	allowedFormats = ".jpg,.jpeg,.png,.gif,.webp"
 )
@@ -51,6 +50,9 @@ func AdminUploadImage(c *gin.Context) {
 		return
 	}
 
+	// 获取存储路径（支持环境变量配置，用于持久化存储）
+	baseUploadDir := utils.GetStoragePath()
+	
 	// 创建分类目录
 	uploadDir := filepath.Join(baseUploadDir, category)
 	if err := os.MkdirAll(uploadDir, 0755); err != nil {
