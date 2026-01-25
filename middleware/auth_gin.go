@@ -29,12 +29,20 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 
-		// 解析token
-		userId, openId, err := utils.ParseToken(token)
+		// 优先从Header获取OpenID（微信云托管自动提供）
+		openId := c.GetHeader("x-wx-openid")
+		
+		// 解析token获取用户ID
+		userId, tokenOpenId, err := utils.ParseToken(token)
 		if err != nil {
 			utils.Error(401, "token无效").WriteJSON(c.Writer)
 			c.Abort()
 			return
+		}
+
+		// 如果Header中没有OpenID，使用token中的OpenID
+		if openId == "" {
+			openId = tokenOpenId
 		}
 
 		// 将用户信息存储到上下文

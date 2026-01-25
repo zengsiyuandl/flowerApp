@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"time"
 )
@@ -18,5 +20,12 @@ func GenerateRechargeNo() string {
 // FormatTime 格式化时间
 func FormatTime(t time.Time) string {
 	return t.Format("2006-01-02 15:04:05")
+}
+
+// GenerateNonceStr 生成随机字符串（32位）
+func GenerateNonceStr() string {
+	bytes := make([]byte, 16)
+	rand.Read(bytes)
+	return hex.EncodeToString(bytes)
 }
 
