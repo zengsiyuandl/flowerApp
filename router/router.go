@@ -79,11 +79,20 @@ func SetupRouter() *gin.Engine {
 
 		// 支付相关
 		paymentGroup := apiGroup.Group("/payment")
-		paymentGroup.Use(middleware.AuthRequired())
 		{
-			paymentGroup.POST("/create", api.CreatePayment)
+			// 需要认证的接口
+			authPaymentGroup := paymentGroup.Group("")
+			authPaymentGroup.Use(middleware.AuthRequired())
+			{
+				authPaymentGroup.POST("/create", api.CreatePayment)
+				authPaymentGroup.GET("/order/:orderNo", api.QueryPaymentOrder)
+				authPaymentGroup.POST("/close", api.ClosePaymentOrder)
+				authPaymentGroup.POST("/refund", api.Refund)
+				authPaymentGroup.GET("/refund/:refundNo", api.QueryRefund)
+				authPaymentGroup.GET("/:orderId/status", api.GetPaymentStatus)
+			}
+			// 回调接口不需要认证
 			paymentGroup.POST("/notify", api.PaymentNotify)
-			paymentGroup.GET("/:orderId/status", api.GetPaymentStatus)
 		}
 
 		// 配送相关

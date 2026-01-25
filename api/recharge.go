@@ -2,9 +2,11 @@ package api
 
 import (
 	"strconv"
+	"wxcloudrun-golang/config"
 	"wxcloudrun-golang/db"
 	"wxcloudrun-golang/db/model"
 	"wxcloudrun-golang/middleware"
+	"wxcloudrun-golang/service"
 	"wxcloudrun-golang/utils"
 
 	"github.com/gin-gonic/gin"
@@ -65,13 +67,54 @@ func CreateRecharge(c *gin.Context) {
 	recharge.PaymentId = payment.Id
 	db.Get().Save(&recharge)
 
-	// 生成模拟支付参数
-	paymentParams := utils.GenerateMockPaymentParams(orderNo, req.Amount)
+	// 调用统一下单接口
+	openID := middleware.GetOpenId(c)
+	if openID == "" {
+		utils.Error(400, "无法获取用户OpenID").WriteJSON(c.Writer)
+		return
+	}
+
+	if config.AppConfig.WxPaySubMchId == "" {
+		utils.Error(500, "微信支付未配置").WriteJSON(c.Writer)
+		return
+	}
+
+	paymentService := service.NewPaymentService()
+	totalFee := int(req.Amount * 100) // 转换为分
+	clientIP := c.ClientIP()
+	if clientIP == "" {
+		clientIP = "127.0.0.1"
+	}
+
+	unifiedReq := &service.UnifiedOrderRequest{
+		OpenID:         openID,
+		Body:           "储值充值-" + orderNo,
+		OutTradeNo:    orderNo,
+		SpbillCreateIP: clientIP,
+		SubMchID:       config.AppConfig.WxPaySubMchId,
+		TotalFee:       totalFee,
+		EnvID:          config.AppConfig.WxCloudEnvId,
+		CallbackType:   service.CallbackTypeCloudRun,
+	}
+	unifiedReq.Container.Service = config.AppConfig.WxCloudServiceName
+	unifiedReq.Container.Path = "/api/payment/notify"
+
+	unifiedResp, err := paymentService.UnifiedOrder(unifiedReq)
+	if err != nil {
+		utils.Error(500, "统一下单失败: "+err.Error()).WriteJSON(c.Writer)
+		return
+	}
+
+	if unifiedResp.RespData.ReturnCode != "SUCCESS" ||
+		unifiedResp.RespData.ResultCode != "SUCCESS" {
+		utils.Error(500, "统一下单失败: "+unifiedResp.RespData.ReturnMsg).WriteJSON(c.Writer)
+		return
+	}
 
 	utils.Success(map[string]interface{}{
-		"recharge":   recharge,
-		"paymentId":  payment.Id,
-		"params":     paymentParams,
+		"recharge":  recharge,
+		"paymentId": payment.Id,
+		"params":    unifiedResp.RespData.Payment,
 	}).WriteJSON(c.Writer)
 }
 
